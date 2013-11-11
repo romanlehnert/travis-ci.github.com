@@ -50,6 +50,28 @@ process of your build.
     bundler_args: --without development debug
 
 
+## Ruby: rspec aborts without any reason
+
+Some of us speed up their tests by disabling the garbage collection as mentioned 
+[here](https://ariejan.net/2011/09/24/rspec-speed-up-by-tweaking-ruby-garbage-collection/).
+Travis machines have 3GB ram and and when you take a look at the memory consumption 
+of the tests without GC, you will notice that they reach that limit very fast. On travis
+this will lead to problems. 
+
+To have the GC disabled by default in the specs, but enabld on travis, make it dependent of an 
+environment variable in spec/spec_helper.rb
+
+    unless !!ENV['GC_ENABLED']
+      puts "Garbage collection will be disabled for rspec. The process will leak. Enable it by setting GC_ENABLED=true"
+      config.before(:all) { DeferredGarbageCollection.start }
+      config.after(:all) { DeferredGarbageCollection.reconsider }
+    end
+
+And enable it in .travis.yml
+
+    env: GC_ENABLED=true
+
+
 ## System: Required language pack isn't installed
 
 The Travis build environments currently have only the en_US language pack installed. 
